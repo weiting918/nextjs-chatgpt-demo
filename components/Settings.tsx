@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Box, Button, Input, Modal, ModalClose, ModalDialog, Option, Select, Typography } from '@mui/joy';
 
 
-/// localStorage (your browser) : API Key
+/// 浏览器存储: API Key 和 gpt model
 
 const LOCALSTORAGE_KEY_OPENAI_API_KEY = 'app-settings-openai-api-key';
 
@@ -35,11 +35,11 @@ export const isValidOpenAIApiKey = (apiKey?: string) =>
 
 
 /**
- * Component that allows the User to modify the application settings,
- * persisted on the client via localStorage.
+ * 组件允许用户修改应用程序设置,
+ * 设置会通过 localStorage 在浏览器进行持久化.
  *
- * @param {boolean} open Whether the Settings modal is open
- * @param {() => void} onClose Call this to close the dialog from outside
+ * @param {boolean} open 是否打开设置对话框
+ * @param {() => void} onClose 外部调用此函数以关闭对话框
  */
 export function Settings({ open, onClose }: { open: boolean, onClose: () => void; }) {
   const [apiKey, setApiKey] = React.useState<string>(loadOpenAIApiKey());
@@ -71,14 +71,14 @@ export function Settings({ open, onClose }: { open: boolean, onClose: () => void
         <Box sx={{ mt: 3, minWidth: 300 }}>
 
           <Typography sx={{ mb: 1 }}>
-            Enter OpenAI API Key (required)
+            输入 OpenAI API Key
           </Typography>
 
           <Input variant='outlined' placeholder={'sk-...'} error={!isValidKey}
                  value={apiKey} onChange={handleApiKeyChange} onKeyDown={handleApiKeyDown} />
 
           <Typography sx={{ mt: 3, mb: 1 }}>
-            Select Model
+            选择大语言模型
           </Typography>
 
           <Select
@@ -90,8 +90,8 @@ export function Settings({ open, onClose }: { open: boolean, onClose: () => void
             <Option value={'gpt-3.5-turbo'}>GPT-3.5 Turbo</Option>
           </Select>
 
-          <Button variant='solid' color={isValidKey ? 'primary' : 'neutral'} sx={{ mt: 3 }} onClick={handleSaveClicked}>
-            Save
+          <Button variant='solid' disabled={!isValidKey} color={isValidKey ? 'primary' : 'neutral'} sx={{ mt: 3 }} onClick={handleSaveClicked}>
+            保存
           </Button>
 
         </Box>

@@ -7,7 +7,7 @@ import { CssBaseline, CssVarsProvider, extendTheme } from '@mui/joy';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 
 
-// Application Theme (JoyUI = MUI) & Fonts (Next.js)
+// 主题 & 字体
 
 const inter = Inter({
   weight: ['400', '500', '600', '700'],
@@ -33,7 +33,7 @@ export const theme = extendTheme({
 export const bodyFontClassName = inter.className;
 
 
-// Client-side cache, shared for the whole session of the user in the browser.
+// 客户端缓存, 在浏览器中为用户的整个会话共享.
 
 const isBrowser = typeof document !== 'undefined';
 
@@ -41,8 +41,8 @@ export function createEmotionCache() {
   let insertionPoint;
 
   if (isBrowser) {
-    // On the client side, _document.tsx has a meta tag with the name "emotion-insertion-point" at the top of the <head>.
-    // This assures that MUI styles are loaded first, and allows allows developers to easily override MUI styles with other solutions like CSS modules.
+    // 查找名为 “emotion-insertion-point” 的 meta 标签.
+    // 将其作为样式插入点，确保 mui 样式优先加载，允许开发人员轻松地使用其他解决方案（如 CSS 模块）覆盖 MUI 样式.
     const emotionInsertionPoint = document.querySelector<HTMLMetaElement>(
       'meta[name="emotion-insertion-point"]',
     );
@@ -66,7 +66,7 @@ export default function MyApp({ Component, emotionCache = clientSideEmotionCache
         <meta name='viewport' content='initial-scale=1, width=device-width' />
       </Head>
       <CssVarsProvider defaultMode='light' theme={theme}>
-        {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
+        {/* CssBaseline 是一个用于初始化样式的组件，提供了一个优雅、一致且简单的基线样式。*/}
         <CssBaseline />
         <Component {...pageProps} />
       </CssVarsProvider>

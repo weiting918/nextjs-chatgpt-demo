@@ -6,23 +6,25 @@ import Face6Icon from '@mui/icons-material/Face6';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import SmartToyTwoToneIcon from '@mui/icons-material/SmartToyTwoTone';
+import RefreshIcon from '@mui/icons-material/Refresh';
 
 import { ChatMessage, UiMessage } from '../components/ChatMessage';
 import { Composer } from '../components/Composer';
 import { isValidOpenAIApiKey, loadGptModel, loadOpenAIApiKey, Settings } from '../components/Settings';
 
-
-/// Purpose configuration
+/// 内置提示词
 
 type SystemPurpose = 'Catalyst' | 'Custom' | 'Developer' | 'Executive' | 'Generic' | 'Scientist';
 
 const PurposeData: { [key in SystemPurpose]: { systemMessage: string; description: string | JSX.Element } } = {
   Catalyst: {
-    systemMessage: 'You are a marketing extraordinaire for a booming startup fusing creativity, data-smarts, and digital prowess to skyrocket growth & wow audiences. So fun. Much meme. 🚀🎯💡',
+    systemMessage:
+      'You are a marketing extraordinaire for a booming startup fusing creativity, data-smarts, and digital prowess to skyrocket growth & wow audiences. So fun. Much meme. 🚀🎯💡',
     description: 'The growth hacker with marketing superpowers 🚀',
   },
   Custom: {
-    systemMessage: 'You are ChatGPT, a large language model trained by OpenAI, based on the GPT-4 architecture.\nKnowledge cutoff: 2021-09\nCurrent date: {{Today}}',
+    systemMessage:
+      'You are ChatGPT, a large language model trained by OpenAI, based on the GPT-4 architecture.\nKnowledge cutoff: 2021-09\nCurrent date: {{Today}}',
     description: 'User-defined purpose',
   },
   Developer: {
@@ -34,17 +36,18 @@ const PurposeData: { [key in SystemPurpose]: { systemMessage: string; descriptio
     description: 'Helps you write business emails',
   },
   Generic: {
-    systemMessage: 'You are ChatGPT, a large language model trained by OpenAI, based on the GPT-4 architecture.\nKnowledge cutoff: 2021-09\nCurrent date: {{Today}}',
+    systemMessage:
+      'You are ChatGPT, a large language model trained by OpenAI, based on the GPT-4 architecture.\nKnowledge cutoff: 2021-09\nCurrent date: {{Today}}',
     description: 'Helps you think',
   },
   Scientist: {
-    systemMessage: 'You are a scientist\'s assistant. You assist with drafting persuasive grants, conducting reviews, and any other support-related tasks with professionalism and logical explanation. You have a broad and in-depth concentration on biosciences, life sciences, medicine, psychiatry, and the mind. Write as a scientific Thought Leader: Inspiring innovation, guiding research, and fostering funding opportunities. Focus on evidence-based information, emphasize data analysis, and promote curiosity and open-mindedness',
+    systemMessage:
+      "You are a scientist's assistant. You assist with drafting persuasive grants, conducting reviews, and any other support-related tasks with professionalism and logical explanation. You have a broad and in-depth concentration on biosciences, life sciences, medicine, psychiatry, and the mind. Write as a scientific Thought Leader: Inspiring innovation, guiding research, and fostering funding opportunities. Focus on evidence-based information, emphasize data analysis, and promote curiosity and open-mindedness",
     description: 'Helps you write scientific papers',
   },
 };
 
-
-/// UI Messages configuration
+/// 聊天消息类型和创建新消息的辅助函数
 
 const MessageDefaults: { [key in UiMessage['role']]: Pick<UiMessage, 'role' | 'sender' | 'avatar'> } = {
   system: {
@@ -71,8 +74,7 @@ const createUiMessage = (role: UiMessage['role'], text: string): UiMessage => ({
   ...MessageDefaults[role],
 });
 
-
-/// Chat ///
+/// 主界面 ///
 
 export default function Conversation() {
   const theme = useTheme();
@@ -84,38 +86,35 @@ export default function Conversation() {
   const [settingsShown, setSettingsShown] = React.useState(false);
   const messagesEndRef = React.useRef<HTMLDivElement | null>(null);
 
+
   React.useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   React.useEffect(() => {
     // show the settings at startup if the API key is not present
-    if (!isValidOpenAIApiKey(loadOpenAIApiKey()))
-      setSettingsShown(true);
+    if (!isValidOpenAIApiKey(loadOpenAIApiKey())) setSettingsShown(true);
   }, []);
 
   const handleDarkModeToggle = () => setColorMode(colorMode === 'dark' ? 'light' : 'dark');
 
-
   const handleListClear = () => setMessages([]);
 
-  const handleListDelete = (uid: string) =>
-    setMessages(list => list.filter(message => message.uid !== uid));
+  const handleListDelete = (uid: string) => setMessages((list) => list.filter((message) => message.uid !== uid));
 
   const handleListEdit = (uid: string, newText: string) =>
-    setMessages(list => list.map(message => (message.uid === uid ? { ...message, text: newText } : message)));
+    setMessages((list) => list.map((message) => (message.uid === uid ? { ...message, text: newText } : message)));
 
   const handleListRunAgain = (uid: string) => {
     // take all messages until we get to uid, then remove the rest
-    const uidPosition = messages.findIndex(message => message.uid === uid);
+    const uidPosition = messages.findIndex((message) => message.uid === uid);
     if (uidPosition === -1) return;
     const conversation = messages.slice(0, uidPosition + 1);
     setMessages(conversation);
 
     // disable the composer while the bot is replying
     setDisableCompose(true);
-    getBotMessageStreaming(conversation)
-      .then(() => setDisableCompose(false));
+    getBotMessageStreaming(conversation).then(() => setDisableCompose(false));
   };
 
   const handlePurposeChange = (purpose: SystemPurpose | null) => {
@@ -128,7 +127,6 @@ export default function Conversation() {
 
     setSelectedSystemPurpose(purpose);
   };
-
 
   const getBotMessageStreaming = async (messages: UiMessage[]) => {
     const response = await fetch('/api/chat', {
@@ -166,9 +164,9 @@ export default function Conversation() {
           }
         }
 
-        setMessages(list => {
+        setMessages((list) => {
           // if missing, add the message at the end of the list, otherwise set a new list anyway, to trigger a re-render
-          const message = list.find(message => message.uid === newBotMessage.uid);
+          const message = list.find((message) => message.uid === newBotMessage.uid);
           return !message ? [...list, newBotMessage] : [...list];
         });
       }
@@ -176,90 +174,112 @@ export default function Conversation() {
   };
 
   const handleComposerSendMessage: (text: string) => void = (text) => {
-
-    // seed the conversation with a 'system' message
     const conversation = [...messages];
-    if (!conversation.length) {
-      let systemMessage = PurposeData[selectedSystemPurpose].systemMessage;
-      systemMessage = systemMessage.replaceAll('{{Today}}', new Date().toISOString().split('T')[0]);
-      conversation.push(createUiMessage('system', systemMessage));
-    }
 
-    // add the user message
+    // 添加用户消息，传达用户的意图
     conversation.push(createUiMessage('user', text));
 
-    // update the list of messages
+    // 更新 message 状态为新的 conversation
     setMessages(conversation);
 
-    // disable the composer while the bot is replying
+    // 禁止用户在机器人回复期间继续发送消息
     setDisableCompose(true);
-    getBotMessageStreaming(conversation)
-      .then(() => setDisableCompose(false));
+    getBotMessageStreaming(conversation).then(() => setDisableCompose(false));
   };
-
 
   const listEmpty = !messages.length;
 
   const Emoji = (props: any) => null;
 
   return (
-    <Container maxWidth='xl' disableGutters sx={{
-      boxShadow: theme.vars.shadow.lg,
-    }}>
-      <Stack direction='column' sx={{
-        minHeight: '100vh',
-      }}>
-
-        {/* Application Bar */}
-        <Sheet variant='solid' invertedColors sx={{
-          position: 'sticky', top: 0, zIndex: 20, p: 1,
-          background: theme.vars.palette.primary.solidHoverBg,
-          display: 'flex', flexDirection: 'row',
-        }}>
-          <IconButton variant='plain' color='neutral' onClick={handleDarkModeToggle}>
+    <Container
+      maxWidth="xl"
+      disableGutters
+      sx={{
+        boxShadow: theme.vars.shadow.lg,
+      }}
+    >
+      <Stack
+        direction="column"
+        sx={{
+          minHeight: '100vh',
+        }}
+      >
+        {/* 顶部导航栏 */}
+        <Sheet
+          variant="solid"
+          invertedColors
+          sx={{
+            position: 'sticky',
+            top: 0,
+            zIndex: 20,
+            p: 1,
+            background: theme.vars.palette.primary.solidHoverBg,
+            display: 'flex',
+            flexDirection: 'row',
+          }}
+        >
+          <IconButton variant="plain" onClick={handleDarkModeToggle}>
             <DarkModeIcon />
           </IconButton>
 
-          {/*{!isEmpty && (*/}
-          {/*  <IconButton variant='plain' color='neutral' disabled={isDisabledCompose} onClick={onClearConversation}>*/}
-          {/*    <DeleteOutlineOutlinedIcon />*/}
-          {/*  </IconButton>*/}
-          {/*)}*/}
-
-          <Typography sx={{
-            textAlign: 'center',
-            fontFamily: theme.vars.fontFamily.code, fontSize: '1rem', lineHeight: 1.75,
-            my: 'auto',
-            flexGrow: 1,
-          }} onDoubleClick={handleListClear}>
-            GPT-4
+          <Typography
+            sx={{
+              textAlign: 'center',
+              fontFamily: theme.vars.fontFamily.code,
+              fontSize: '1rem',
+              lineHeight: 1.75,
+              my: 'auto',
+              flexGrow: 1,
+            }}
+            onDoubleClick={handleListClear}
+          >
+            React web chatgpt
           </Typography>
 
-          <IconButton variant='plain' color='neutral' onClick={() => setSettingsShown(true)}>
+          <IconButton variant="plain" onClick={handleListClear}>
+            <RefreshIcon />
+          </IconButton>
+
+          <IconButton variant="plain" onClick={() => setSettingsShown(true)}>
             <SettingsOutlinedIcon />
           </IconButton>
         </Sheet>
 
-        {/* Chat */}
-        <Box sx={{
-          flexGrow: 1,
-          background: theme.vars.palette.background.level1,
-        }}>
+        {/* 聊天窗口 */}
+        <Box
+          sx={{
+            flexGrow: 1,
+            background: theme.vars.palette.background.level1,
+          }}
+        >
           {listEmpty ? (
-            <Stack direction='column' sx={{ alignItems: 'center', justifyContent: 'center', minHeight: '50vh' }}>
+            <Stack direction="column" sx={{ alignItems: 'center', justifyContent: 'center', minHeight: '50vh' }}>
               <Box>
-                <Typography level='body3' color='neutral'>
+                <Typography level="body3" color="neutral">
                   AI purpose
                 </Typography>
                 <Select value={selectedSystemPurpose} onChange={(e, v) => handlePurposeChange(v)} sx={{ minWidth: '40vw' }}>
-                  <Option value='Developer'><Emoji>👩‍💻</Emoji> Developer</Option>
-                  <Option value='Scientist'><Emoji>🔬</Emoji> Scientist</Option>
-                  <Option value='Executive'><Emoji>👔</Emoji> Executive</Option>
-                  <Option value='Catalyst'><Emoji>🚀</Emoji> Catalyst</Option>
-                  <Option value='Generic'><Emoji>🧠</Emoji> ChatGPT4</Option>
-                  <Option value='Custom'><Emoji>✨</Emoji> Custom</Option>
+                  <Option value="Developer">
+                    <Emoji>👩‍💻</Emoji> Developer
+                  </Option>
+                  <Option value="Scientist">
+                    <Emoji>🔬</Emoji> Scientist
+                  </Option>
+                  <Option value="Executive">
+                    <Emoji>👔</Emoji> Executive
+                  </Option>
+                  <Option value="Catalyst">
+                    <Emoji>🚀</Emoji> Catalyst
+                  </Option>
+                  <Option value="Generic">
+                    <Emoji>🧠</Emoji> ChatGPT4
+                  </Option>
+                  <Option value="Custom">
+                    <Emoji>✨</Emoji> Custom
+                  </Option>
                 </Select>
-                <Typography level='body2' sx={{ mt: 2, minWidth: 260 }}>
+                <Typography level="body2" sx={{ mt: 2, minWidth: 260 }}>
                   {PurposeData[selectedSystemPurpose].description}
                 </Typography>
               </Box>
@@ -267,33 +287,40 @@ export default function Conversation() {
           ) : (
             <>
               <List sx={{ p: 0 }}>
-                {messages.map((message, index) =>
-                  <ChatMessage key={'msg-' + message.uid} uiMessage={message}
-                               onDelete={() => handleListDelete(message.uid)}
-                               onEdit={newText => handleListEdit(message.uid, newText)}
-                               onRunAgain={() => handleListRunAgain(message.uid)} />)}
+                {messages.map((message, index) => (
+                  <ChatMessage
+                    key={'msg-' + message.uid}
+                    uiMessage={message}
+                    onDelete={() => handleListDelete(message.uid)}
+                    onEdit={(newText) => handleListEdit(message.uid, newText)}
+                    onRunAgain={() => handleListRunAgain(message.uid)}
+                  />
+                ))}
                 <div ref={messagesEndRef}></div>
               </List>
             </>
           )}
         </Box>
 
-        {/* Compose */}
-        <Box sx={{
-          position: 'sticky', bottom: 0, zIndex: 10,
-          background: theme.vars.palette.background.body,
-          borderTop: '1px solid',
-          borderTopColor: theme.vars.palette.divider,
-          p: { xs: 1, md: 2 },
-        }}>
-          <Composer isDeveloper={selectedSystemPurpose === 'Developer'} disableSend={disableCompose} sendMessage={handleComposerSendMessage} />
+        {/* 用户输入窗口 */}
+        <Box
+          sx={{
+            position: 'sticky',
+            bottom: 0,
+            zIndex: 10,
+            background: theme.vars.palette.background.body,
+            borderTop: '1px solid',
+            borderTopColor: theme.vars.palette.divider,
+            p: { xs: 1, md: 2 },
+          }}
+        >
+          <Composer disableSend={disableCompose} sendMessage={handleComposerSendMessage} />
         </Box>
-
       </Stack>
 
-      {/* Settings Modal */}
+      {/* 弹框-设置项 */}
       <Settings open={settingsShown} onClose={() => setSettingsShown(false)} />
-
+      
     </Container>
   );
 }

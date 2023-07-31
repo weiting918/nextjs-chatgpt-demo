@@ -5,11 +5,11 @@ import { UiMessage } from '../../components/ChatMessage';
 
 
 if (!process.env.OPENAI_API_KEY)
-  console.warn('OPENAI_API_KEY has not been provided in this deployment environment. ' +
-    'Will use the optional keys incoming from the client, which is not recommended.');
+  console.warn('在此环境部署中未提供 OPENAI_API_KEY. ' +
+    '将使用来自客户端的可选密钥, 这是不推荐的做法.');
 
 
-// definition for OpenAI wire types
+// 定义 Open AI 通信数据类型
 
 interface ChatMessage {
   role: 'assistant' | 'system' | 'user';
@@ -29,13 +29,13 @@ interface ChatCompletionsRequest {
 }
 
 interface ChatCompletionsResponseChunked {
-  id: string; // unique id of this chunk
+  id: string; // 分块的唯一标识
   object: 'chat.completion.chunk';
-  created: number; // unix timestamp in seconds
-  model: string; // can differ from the ask, e.g. 'gpt-4-0314'
+  created: number; // 创建时间戳
+  model: string; // AI模型名称, e.g. 'gpt-4-0314'，可能与请求中指定的模型名称不同
   choices: {
     delta: Partial<ChatMessage>;
-    index: number; // always 0s for n=1
+    index: number; // 始终=0，对于 n=1 时
     finish_reason: 'stop' | 'length' | null;
   }[];
 }
@@ -51,39 +51,43 @@ async function OpenAIStream(apiKey: string, payload: Omit<ChatCompletionsRequest
     n: 1,
   };
 
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+  const fetch = require('node-fetch');
+  const res = await fetch('https://api.openai-proxy.com/v1/chat/completions', {
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${apiKey}`,
     },
     method: 'POST',
     body: JSON.stringify(streamingPayload),
+  }).catch((error: any) => {
+    // TODO：官方地址 https://api.openai.com 接口超时，换成代理的是可以的
+    console.error('An error occurred:', error);
   });
 
   return new ReadableStream({
     async start(controller) {
 
-      // handle errors here, to return them as custom text on the stream
+      // 处理错误,
       if (!res.ok) {
         let errorPayload: object = {};
         try {
           errorPayload = await res.json();
         } catch (e) {
-          // ignore
+          // 忽略
         }
-        // return custom text
+        // 尝试读取错误信息并将其加入到流中，并关闭流
         controller.enqueue(encoder.encode(`OpenAI API error: ${res.status} ${res.statusText} ${JSON.stringify(errorPayload)}`));
         controller.close();
         return;
       }
 
-      // the first packet will have the model name
+      // 是否已经发送了第一个数据包
       let sentFirstPacket = false;
 
-      // stream response (SSE) from OpenAI may be fragmented into multiple chunks
-      // this ensures we properly read chunks and invoke an event for each SSE event stream
+      // 来自 OpenAI 的响应是通过 SSE（Server-Sent Events）流传输的，并且可能被分成多个片段（chunks）
+      // 为了确保我们正确地读取这些片段并针对每个 SSE 事件流调用事件处理函数，我们使用了解析器来处理这些片段
       const parser = createParser((event: ParsedEvent | ReconnectInterval) => {
-        // ignore reconnect interval
+        // 忽略重新连接间隔
         if (event.type !== 'event')
           return;
 
@@ -96,7 +100,7 @@ async function OpenAIStream(apiKey: string, payload: Omit<ChatCompletionsRequest
         try {
           const json: ChatCompletionsResponseChunked = JSON.parse(event.data);
 
-          // ignore any 'role' delta update
+          // 忽略角色更新
           if (json.choices[0].delta?.role)
             return;
 
@@ -129,7 +133,7 @@ async function OpenAIStream(apiKey: string, payload: Omit<ChatCompletionsRequest
 }
 
 
-// Next.js API route
+// Next.js API 路由
 
 export interface ChatApiInput {
   apiKey?: string;
@@ -140,9 +144,8 @@ export interface ChatApiInput {
 }
 
 /**
- * The client will be sent a stream of words. As an extra (an totally optional) 'data channel' we send a
- * string'ified JSON object with the few initial variables. We hope in the future to adopt a better
- * solution (e.g. websockets, but that will exclude deployment in Edge Functions).
+ * 客户端将会接收一串单词流，
+ * 作为额外信息 (完全可选) ，我们会发送少量初始化变量的字符串化 JSON 对象. 
  */
 export interface ChatApiOutputStart {
   model: string;
@@ -150,14 +153,14 @@ export interface ChatApiOutputStart {
 
 export default async function handler(req: NextRequest) {
 
-  // read inputs
+  // 读取输入
   const { apiKey: userApiKey, messages, model = 'gpt-4', temperature = 0.5, max_tokens = 2048 }: ChatApiInput = await req.json();
   const chatGptInputMessages: ChatMessage[] = messages.map(({ role, text }) => ({
     role: role,
     content: text,
   }));
 
-  // select key
+  // 选择密钥策略
   const apiKey = userApiKey || process.env.OPENAI_API_KEY || '';
   if (!apiKey)
     return new Response('Error: missing OpenAI API Key. Add it on the client side (Settings icon) or server side (your deployment).', { status: 400 });
