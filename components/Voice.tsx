@@ -86,11 +86,15 @@ declare class SpeechRecognition extends EventTarget {
   onspeechend: ((this: SpeechRecognitionEvent, ev: Event) => any) | null;
 }
 
-// 如果你的浏览器支持 webkitSpeechRecognition，请添加以下声明
-declare class webkitSpeechRecognition extends SpeechRecognition {}
-
 type RecordingState = 'start' | 'listening' | 'end';
 
+/**
+ * 组件支持浏览器语音识别
+ * 支持流式输出语音识别结果
+ *
+ * @param {boolean} open 是否打开语音对话框
+ * @param {(param: string) => void} onClose 关闭对话框
+ */
 export function Voice({ open, onClose }: { open: boolean; onClose: (param: string) => void }) {
   const [recordingState, setRecordingState] = useState<RecordingState>('start');
   const [message, setMessage] = useState('请开始讲话');

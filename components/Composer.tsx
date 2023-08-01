@@ -19,7 +19,7 @@ const loadMessagesFromHistory = (): string[] => {
 
 /**
  * 用于聊天界面中编写和发送消息的组件.
- * 支持从剪贴板粘贴文本和代码，并且还提供了本地发送消息的历史记录功能.
+ * 支持本地发送消息的历史记录功能.
  *
  * @param {boolean} disableSend - 用于禁用发送按钮.
  * @param {(text: string) => void} sendMessage - 用于发送已编写消息.
