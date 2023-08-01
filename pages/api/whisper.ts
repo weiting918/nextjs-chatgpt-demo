@@ -37,9 +37,7 @@ export default withFileUpload(async (req, res) => {
   }
 });
 
-//noinspection JSUnusedGlobalSymbols
 export const config = {
-  runtime: 'edge',
   api: {
     bodyParser: false,
   },
