@@ -2,11 +2,7 @@ const FormData = require('form-data');
 import { withFileUpload } from 'next-multiparty';
 import { createReadStream } from 'fs';
 
-export const config = {
-    api: {
-      bodyParser: false,
-    },
-  };
+
 
 export default withFileUpload(async (req, res) => {
   const file = req.file;
@@ -40,3 +36,11 @@ export default withFileUpload(async (req, res) => {
     res.status(400).send(new Error());
   }
 });
+
+//noinspection JSUnusedGlobalSymbols
+export const config = {
+  runtime: 'edge',
+  api: {
+    bodyParser: false,
+  },
+};

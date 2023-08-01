@@ -90,7 +90,7 @@ export function Settings({ open, onClose }: { open: boolean, onClose: () => void
             <Option value={'gpt-3.5-turbo'}>GPT-3.5 Turbo</Option>
           </Select>
 
-          <Button variant='solid' disabled={!isValidKey} color={isValidKey ? 'primary' : 'neutral'} sx={{ mt: 3 }} onClick={handleSaveClicked}>
+          <Button variant='solid' color='primary' sx={{ mt: 3 }} onClick={handleSaveClicked}>
             保存
           </Button>
 
