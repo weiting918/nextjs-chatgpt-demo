@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Box, Button, IconButton, Grid, ListDivider, Menu, MenuItem, Stack, Textarea } from '@mui/joy';
+import { Box, Button, Grid, ListDivider, Menu, MenuItem, Stack, Textarea } from '@mui/joy';
 import TelegramIcon from '@mui/icons-material/Telegram';
 import DeleteIcon from '@mui/icons-material/Delete';
 import HistoryIcon from '@mui/icons-material/History';
@@ -69,7 +69,7 @@ export function Composer({ disableSend, sendMessage }: { disableSend: boolean; s
   const handleRecordClose = (param: string) => {
     setIsRecording(false);
     setComposeText(param);
-  }
+  };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {

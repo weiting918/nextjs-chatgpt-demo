@@ -18,7 +18,6 @@ import SportsMartialArtsOutlinedIcon from '@mui/icons-material/SportsMartialArts
 import { Avatar, Box, Button, IconButton, ListItem, Stack, Tooltip, Typography, useTheme } from '@mui/joy';
 import { SxProps, Theme } from '@mui/joy/styles/types';
 
-
 export interface UiMessage {
   uid: string;
   sender: 'You' | 'Bot' | string;
@@ -28,11 +27,10 @@ export interface UiMessage {
   avatar: string | React.ElementType | null;
 }
 
-
 /// 消息拆分为文本和代码块的实用工具
 
-type MessageBlock = { type: 'text'; content: string; } | CodeMessageBlock;
-type CodeMessageBlock = { type: 'code'; content: string; code: string; language: string; };
+type MessageBlock = { type: 'text'; content: string } | CodeMessageBlock;
+type CodeMessageBlock = { type: 'code'; content: string; code: string; language: string };
 
 const parseAndHighlightCodeBlocks = (text: string): MessageBlock[] => {
   const codeBlockRegex = /`{3,}(\w+)?\n([\s\S]*?)(`{3,}|$)/g;
@@ -45,11 +43,7 @@ const parseAndHighlightCodeBlocks = (text: string): MessageBlock[] => {
     const language = match[1] || 'typescript';
     const codeBlock = match[2].trim();
 
-    const highlightedCode = Prism.highlight(
-      codeBlock,
-      Prism.languages[language] || Prism.languages.typescript,
-      language,
-    );
+    const highlightedCode = Prism.highlight(codeBlock, Prism.languages[language] || Prism.languages.typescript, language);
     result.push({ type: 'text', content: text.slice(lastIndex, match.index) });
     result.push({ type: 'code', content: highlightedCode, code: codeBlock, language });
     lastIndex = match.index + match[0].length;
@@ -64,17 +58,17 @@ const parseAndHighlightCodeBlocks = (text: string): MessageBlock[] => {
 
 const copyToClipboard = (text: string) => {
   if (typeof navigator !== 'undefined')
-    navigator.clipboard.writeText(text)
+    navigator.clipboard
+      .writeText(text)
       .then(() => console.log('Message copied to clipboard'))
       .catch((err) => console.error('Failed to copy message: ', err));
 };
 
-
 /// 不同类型的消息组件
 
-type SandpackConfig = { template: 'vanilla-ts' | 'vanilla', files: Record<string, string> };
+type SandpackConfig = { template: 'vanilla-ts' | 'vanilla'; files: Record<string, string> };
 
-function RunnableCode({ codeBlock, theme }: { codeBlock: CodeMessageBlock, theme: Theme }): JSX.Element | null {
+function RunnableCode({ codeBlock, theme }: { codeBlock: CodeMessageBlock; theme: Theme }): JSX.Element | null {
   let config: SandpackConfig;
   switch (codeBlock.language) {
     case 'typescript':
@@ -94,34 +88,55 @@ function RunnableCode({ codeBlock, theme }: { codeBlock: CodeMessageBlock, theme
       return null;
   }
   return (
-    <Sandpack {...config} theme={theme.palette.mode === 'dark' ? 'dark' : 'light'}
-              options={{ showConsole: true, showConsoleButton: true, showTabs: false, showNavigator: false }} />
+    <Sandpack
+      {...config}
+      theme={theme.palette.mode === 'dark' ? 'dark' : 'light'}
+      options={{ showConsole: true, showConsoleButton: true, showTabs: false, showNavigator: false }}
+    />
   );
 }
 
-function ChatMessageCodeBlock({ codeBlock, theme, sx }: { codeBlock: CodeMessageBlock, theme: Theme, sx?: SxProps }) {
+function ChatMessageCodeBlock({ codeBlock, theme, sx }: { codeBlock: CodeMessageBlock; theme: Theme; sx?: SxProps }) {
   const [showSandpack, setShowSandpack] = React.useState(false);
 
-  const handleCopyToClipboard = () =>
-    copyToClipboard(codeBlock.code);
+  const handleCopyToClipboard = () => copyToClipboard(codeBlock.code);
 
-  const handleToggleSandpack = () =>
-    setShowSandpack(!showSandpack);
+  const handleToggleSandpack = () => setShowSandpack(!showSandpack);
 
-  return <Box component='code' sx={{
-    position: 'relative', ...(sx || {}), mx: 0, p: 1.5,
-    display: 'block', fontWeight: 500, background: theme.vars.palette.background.level1,
-    '&:hover > button': { opacity: 1 },
-  }}>
-    <IconButton variant='plain' color='primary' onClick={handleCopyToClipboard} sx={{ position: 'absolute', top: 0, right: 0, zIndex: 10, p: 0.5, opacity: 0, transition: 'opacity 0.3s' }}>
-      <ContentCopyIcon />
-    </IconButton>
-    <IconButton variant='plain' color='primary' onClick={handleToggleSandpack} sx={{ position: 'absolute', top: 0, right: 50, zIndex: 10, p: 0.5, opacity: 0, transition: 'opacity 0.3s' }}>
-      {showSandpack ? <StopOutlinedIcon /> : <PlayArrowOutlinedIcon />}
-    </IconButton>
-    <Box dangerouslySetInnerHTML={{ __html: codeBlock.content }} />
-    {showSandpack && <RunnableCode codeBlock={codeBlock} theme={theme} />}
-  </Box>;
+  return (
+    <Box
+      component="code"
+      sx={{
+        position: 'relative',
+        ...(sx || {}),
+        mx: 0,
+        p: 1.5,
+        display: 'block',
+        fontWeight: 500,
+        background: theme.vars.palette.background.level1,
+        '&:hover > button': { opacity: 1 },
+      }}
+    >
+      <IconButton
+        variant="plain"
+        color="primary"
+        onClick={handleCopyToClipboard}
+        sx={{ position: 'absolute', top: 0, right: 0, zIndex: 10, p: 0.5, opacity: 0, transition: 'opacity 0.3s' }}
+      >
+        <ContentCopyIcon />
+      </IconButton>
+      <IconButton
+        variant="plain"
+        color="primary"
+        onClick={handleToggleSandpack}
+        sx={{ position: 'absolute', top: 0, right: 50, zIndex: 10, p: 0.5, opacity: 0, transition: 'opacity 0.3s' }}
+      >
+        {showSandpack ? <StopOutlinedIcon /> : <PlayArrowOutlinedIcon />}
+      </IconButton>
+      <Box dangerouslySetInnerHTML={{ __html: codeBlock.content }} />
+      {showSandpack && <RunnableCode codeBlock={codeBlock} theme={theme} />}
+    </Box>
+  );
 }
 
 function prettyModel(model: string): string {
@@ -129,7 +144,6 @@ function prettyModel(model: string): string {
   if (model.startsWith('gpt-3.5-turbo')) return '3.5-turbo';
   return model;
 }
-
 
 /**
  * 聊天消息UI组件
@@ -149,7 +163,6 @@ export function ChatMessage(props: { uiMessage: UiMessage }) {
 
   const handleExpand = () => setForceExpanded(true);
 
-
   // 主题配置
   let background = theme.vars.palette.background.body;
   let textBackground: string | undefined = undefined;
@@ -161,8 +174,7 @@ export function ChatMessage(props: { uiMessage: UiMessage }) {
   } else if (message.role === 'assistant') {
     if (message.text.startsWith('Error: ') || message.text.startsWith('OpenAI API error: ')) {
       background = theme.vars.palette.danger.softBg;
-    } else
-      background = theme.vars.palette.background.body;
+    } else background = theme.vars.palette.background.body;
   }
 
   // 文本框样式
@@ -184,52 +196,60 @@ export function ChatMessage(props: { uiMessage: UiMessage }) {
     }
   }
 
-
   return (
-    <ListItem sx={{
-      display: 'flex', flexDirection: message.sender === 'You' ? 'row-reverse' : 'row', alignItems: 'flex-start',
-      px: 1, py: 2,
-      background,
-      borderBottom: '1px solid',
-      borderBottomColor: `rgba(${theme.vars.palette.neutral.mainChannel} / 0.1)`,
-    }}>
-
+    <ListItem
+      sx={{
+        display: 'flex',
+        flexDirection: message.sender === 'You' ? 'row-reverse' : 'row',
+        alignItems: 'flex-start',
+        px: 1,
+        py: 2,
+        background,
+        borderBottom: '1px solid',
+        borderBottomColor: `rgba(${theme.vars.palette.neutral.mainChannel} / 0.1)`,
+      }}
+    >
       <Stack sx={{ alignItems: 'center', minWidth: 64, textAlign: 'center' }}>
-        {(
-          typeof message.avatar === 'string'
-            ? <Avatar alt={message.sender} src={message.avatar} />
-            : (message.avatar != null)
-              ? <message.avatar sx={{ width: 40, height: 40 }} />
-              : <SportsMartialArtsOutlinedIcon sx={{ width: 40, height: 40 }} />
+        {typeof message.avatar === 'string' ? (
+          <Avatar alt={message.sender} src={message.avatar} />
+        ) : message.avatar != null ? (
+          <message.avatar sx={{ width: 40, height: 40 }} />
+        ) : (
+          <SportsMartialArtsOutlinedIcon sx={{ width: 40, height: 40 }} />
         )}
 
-        {message.role === 'system' && (<Typography level='body2' color='neutral'>system</Typography>)}
+        {message.role === 'system' && (
+          <Typography level="body2" color="neutral">
+            system
+          </Typography>
+        )}
         {message.role === 'assistant' && (
-          <Tooltip title={message.model} variant='solid'>
-            <Typography level='body2' color='neutral'>{prettyModel(message.model)}</Typography>
+          <Tooltip title={message.model} variant="solid">
+            <Typography level="body2" color="neutral">
+              {prettyModel(message.model)}
+            </Typography>
           </Tooltip>
         )}
-
       </Stack>
 
-      {<Box sx={{ ...chatFontCss, flexGrow: 0, whiteSpace: 'break-spaces' }}>
+      {
+        <Box sx={{ ...chatFontCss, flexGrow: 0, whiteSpace: 'break-spaces' }}>
           {parseAndHighlightCodeBlocks(collapsedText).map((part, index) =>
             part.type === 'code' ? (
               <ChatMessageCodeBlock key={index} codeBlock={part} theme={theme} sx={chatFontCss} />
             ) : (
-              <Typography key={index} level='body1' component='span'
-                          sx={{ ...chatFontCss, mx: 1.5, background: textBackground }}>
+              <Typography key={index} level="body1" component="span" sx={{ ...chatFontCss, mx: 1.5, background: textBackground }}>
                 {part.content}
               </Typography>
             ),
           )}
           {isCollapsed && (
-            <Button variant='plain' onClick={handleExpand}>
+            <Button variant="plain" onClick={handleExpand}>
               ... 展开 ...
             </Button>
           )}
-        </Box>}
-
+        </Box>
+      }
     </ListItem>
   );
 }

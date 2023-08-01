@@ -1,13 +1,8 @@
 import type { NextRequest } from 'next/server';
 import { createParser, ParsedEvent, ReconnectInterval } from 'eventsource-parser';
-
 import { UiMessage } from '../../components/ChatMessage';
 
-
-if (!process.env.OPENAI_API_KEY)
-  console.warn('在此环境部署中未提供 OPENAI_API_KEY. ' +
-    '将使用来自客户端的可选密钥, 这是不推荐的做法.');
-
+if (!process.env.OPENAI_API_KEY) console.warn('在此环境部署中未提供 OPENAI_API_KEY. ' + '将使用来自客户端的可选密钥, 这是不推荐的做法.');
 
 // 定义 Open AI 通信数据类型
 
@@ -40,7 +35,6 @@ interface ChatCompletionsResponseChunked {
   }[];
 }
 
-
 async function OpenAIStream(apiKey: string, payload: Omit<ChatCompletionsRequest, 'stream' | 'n'>): Promise<ReadableStream> {
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
@@ -66,7 +60,6 @@ async function OpenAIStream(apiKey: string, payload: Omit<ChatCompletionsRequest
 
   return new ReadableStream({
     async start(controller) {
-
       // 处理错误,
       if (!res.ok) {
         let errorPayload: object = {};
@@ -88,8 +81,7 @@ async function OpenAIStream(apiKey: string, payload: Omit<ChatCompletionsRequest
       // 为了确保我们正确地读取这些片段并针对每个 SSE 事件流调用事件处理函数，我们使用了解析器来处理这些片段
       const parser = createParser((event: ParsedEvent | ReconnectInterval) => {
         // 忽略重新连接间隔
-        if (event.type !== 'event')
-          return;
+        if (event.type !== 'event') return;
 
         // https://beta.openai.com/docs/api-reference/completions/create#completions/create-stream
         if (event.data === '[DONE]') {
@@ -101,8 +93,7 @@ async function OpenAIStream(apiKey: string, payload: Omit<ChatCompletionsRequest
           const json: ChatCompletionsResponseChunked = JSON.parse(event.data);
 
           // 忽略角色更新
-          if (json.choices[0].delta?.role)
-            return;
+          if (json.choices[0].delta?.role) return;
 
           // 第一个数据包，添加额外的信息
           if (!sentFirstPacket) {
@@ -117,7 +108,6 @@ async function OpenAIStream(apiKey: string, payload: Omit<ChatCompletionsRequest
           const text = json.choices[0].delta?.content || '';
           const queue = encoder.encode(text);
           controller.enqueue(queue);
-
         } catch (e) {
           // json 解析错误，忽略
           controller.error(e);
@@ -125,13 +115,10 @@ async function OpenAIStream(apiKey: string, payload: Omit<ChatCompletionsRequest
       });
 
       // https://web.dev/streams/#asynchronous-iteration
-      for await (const chunk of res.body as any)
-        parser.feed(decoder.decode(chunk));
-
+      for await (const chunk of res.body as any) parser.feed(decoder.decode(chunk));
     },
   });
 }
-
 
 // Next.js API 路由
 
@@ -145,14 +132,13 @@ export interface ChatApiInput {
 
 /**
  * 客户端将会接收一串单词流，
- * 作为额外信息 (完全可选) ，我们会发送少量初始化变量的字符串化 JSON 对象. 
+ * 作为额外信息 (完全可选) ，我们会发送少量初始化变量的字符串化 JSON 对象.
  */
 export interface ChatApiOutputStart {
   model: string;
 }
 
 export default async function handler(req: NextRequest) {
-
   // 读取输入
   const { apiKey: userApiKey, messages, model = 'gpt-4', temperature = 0.5, max_tokens = 2048 }: ChatApiInput = await req.json();
   const chatGptInputMessages: ChatMessage[] = messages.map(({ role, text }) => ({
@@ -173,7 +159,7 @@ export default async function handler(req: NextRequest) {
   });
 
   return new Response(stream);
-};
+}
 
 //noinspection JSUnusedGlobalSymbols
 export const config = {

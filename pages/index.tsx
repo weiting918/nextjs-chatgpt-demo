@@ -50,7 +50,6 @@ export default function Conversation() {
   const [settingsShown, setSettingsShown] = React.useState(false);
   const messagesEndRef = React.useRef<HTMLDivElement | null>(null);
 
-
   React.useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -198,10 +197,7 @@ export default function Conversation() {
             <>
               <List sx={{ p: 0 }}>
                 {messages.map((message) => (
-                  <ChatMessage
-                    key={'msg-' + message.uid}
-                    uiMessage={message}
-                  />
+                  <ChatMessage key={'msg-' + message.uid} uiMessage={message} />
                 ))}
                 <div ref={messagesEndRef}></div>
               </List>
@@ -227,7 +223,6 @@ export default function Conversation() {
 
       {/* 弹框-设置项 */}
       <Settings open={settingsShown} onClose={() => setSettingsShown(false)} />
-      
     </Container>
   );
 }

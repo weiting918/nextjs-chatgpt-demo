@@ -152,7 +152,6 @@ export function Voice({ open, onClose }: { open: boolean; onClose: (param: strin
         });
 
         mediaRecorder.addEventListener('stop', () => {
-
           console.log('mediaRecorder stop ===== ', chunks);
 
           // 将所有数据块合并为一个Blob
@@ -169,7 +168,7 @@ export function Voice({ open, onClose }: { open: boolean; onClose: (param: strin
           })
             .then(async (response) => {
               // 处理响应
-              const { text } = await response.json()
+              const { text } = await response.json();
               console.log('text ===== ', text);
             })
             .catch((error) => {
@@ -179,7 +178,6 @@ export function Voice({ open, onClose }: { open: boolean; onClose: (param: strin
         });
 
         mediaRecorder.start();
-
       } catch (error) {
         console.error('Error accessing microphone:', error);
       }
@@ -231,7 +229,6 @@ export function Voice({ open, onClose }: { open: boolean; onClose: (param: strin
       if (recognition) {
         recognition.stop();
       }
-      
     };
   }, [recordingState]);
 

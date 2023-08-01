@@ -7,17 +7,16 @@ import { getInitColorSchemeScript } from '@mui/joy/styles';
 
 import { bodyFontClassName, createEmotionCache, MyAppProps } from './_app';
 
-
 interface MyDocumentProps extends DocumentProps {
   emotionStyleTags: JSX.Element[];
 }
 
 export default function MyDocument({ emotionStyleTags }: MyDocumentProps) {
   return (
-    <Html lang='en' className={bodyFontClassName}>
+    <Html lang="en" className={bodyFontClassName}>
       <Head>
-        <link rel='shortcut icon' href='/favicon.ico' />
-        <meta name='emotion-insertion-point' content='' />
+        <link rel="shortcut icon" href="/favicon.ico" />
+        <meta name="emotion-insertion-point" content="" />
         {emotionStyleTags}
       </Head>
       <body>
@@ -46,11 +45,7 @@ MyDocument.getInitialProps = async (ctx: DocumentContext) => {
   const initialProps = await Document.getInitialProps(ctx);
   const emotionStyles = extractCriticalToChunks(initialProps.html);
   const emotionStyleTags = emotionStyles.styles.map((style) => (
-    <style
-      data-emotion={`${style.key} ${style.ids.join(' ')}`}
-      key={style.key}
-      dangerouslySetInnerHTML={{ __html: style.css }}
-    />
+    <style data-emotion={`${style.key} ${style.ids.join(' ')}`} key={style.key} dangerouslySetInnerHTML={{ __html: style.css }} />
   ));
 
   return {
