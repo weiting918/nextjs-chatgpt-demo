@@ -31,7 +31,6 @@ export function Composer({ disableSend, sendMessage }: { disableSend: boolean; s
   const [messages, setMessages] = React.useState(loadMessagesFromHistory);
 
   const [isRecording, setIsRecording] = React.useState(false);
-  const [mediaRecorder, setMediaRecorder] = React.useState<MediaRecorder | null>(null);
 
   const appendMessageToHistory = (composeText: string, maxMessages: number = 20) => {
     if (typeof localStorage === 'undefined') return;
@@ -61,8 +60,6 @@ export function Composer({ disableSend, sendMessage }: { disableSend: boolean; s
   const handleRecordButtonClicked = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
-      setMediaRecorder(recorder);
       setIsRecording(true);
     } catch (error) {
       console.error('访问权限被拒绝或发生其他错误:', error);
@@ -70,17 +67,9 @@ export function Composer({ disableSend, sendMessage }: { disableSend: boolean; s
   };
 
   const handleRecordClose = (param: string) => {
-    if(mediaRecorder && isRecording) {
-      mediaRecorder.stop();
-      setIsRecording(false);
-    }
-
+    setIsRecording(false);
     setComposeText(param);
   }
-
-  const handleRecordingComplete = (blobUrl: any) => {
-    console.log('录音结束的结果===========', blobUrl);
-  };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {

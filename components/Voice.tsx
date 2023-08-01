@@ -101,6 +101,7 @@ export function Voice({ open, onClose }: { open: boolean; onClose: (param: strin
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
     let mediaStream: MediaStream | null = null;
+    let mediaRecorder: MediaRecorder | null = null;
     let analyser: AnalyserNode | null = null;
     let recognition: SpeechRecognition | null = null;
 
@@ -137,6 +138,48 @@ export function Voice({ open, onClose }: { open: boolean; onClose: (param: strin
           // 开始更新音频水平值
           updateAudioLevel();
         }
+
+        mediaRecorder = new MediaRecorder(mediaStream);
+        // 定义用于保存录音数据的数组
+        const chunks: BlobPart[] | undefined = [];
+
+        // 监听dataavailable事件，当有新的数据块可用时触发
+        mediaRecorder.addEventListener('dataavailable', (event) => {
+          if (event.data.size > 0) {
+            // 将数据块添加到数组中
+            chunks.push(event.data);
+          }
+        });
+
+        mediaRecorder.addEventListener('stop', () => {
+
+          console.log('mediaRecorder stop ===== ', chunks);
+
+          // 将所有数据块合并为一个Blob
+          const blob = new Blob(chunks, { type: 'audio/webm' });
+
+          // 创建FormData对象，用于发送Blob数据到后端
+          const formData = new FormData();
+          formData.append('file', blob, 'audio.webm');
+
+          // 发送网络请求到后端
+          fetch('/api/whisper', {
+            method: 'POST',
+            body: formData,
+          })
+            .then(async (response) => {
+              // 处理响应
+              const { text } = await response.json()
+              console.log('text ===== ', text);
+            })
+            .catch((error) => {
+              // 处理错误
+              console.error(error);
+            });
+        });
+
+        mediaRecorder.start();
+
       } catch (error) {
         console.error('Error accessing microphone:', error);
       }
@@ -170,7 +213,6 @@ export function Voice({ open, onClose }: { open: boolean; onClose: (param: strin
     };
 
     if (recordingState === 'listening') {
-      console.log('useEffect', '开始监听视频');
       startListening();
       startSpeechRecognition();
     }
@@ -180,12 +222,16 @@ export function Voice({ open, onClose }: { open: boolean; onClose: (param: strin
       if (mediaStream) {
         mediaStream.getTracks().forEach((track) => track.stop());
       }
+      if (mediaRecorder) {
+        mediaRecorder.stop();
+      }
       if (analyser) {
         analyser.disconnect();
       }
       if (recognition) {
         recognition.stop();
       }
+      
     };
   }, [recordingState]);
 
@@ -195,7 +241,7 @@ export function Voice({ open, onClose }: { open: boolean; onClose: (param: strin
       timer = setTimeout(() => {
         setRecordingState('listening');
         setMessage('正在收听...');
-      }, 2000);
+      }, 1000);
     } else {
       setRecordingState('start');
       setMessage('请开始讲话');
