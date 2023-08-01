@@ -10,31 +10,26 @@ import 'prismjs/components/prism-python';
 import 'prismjs/components/prism-json';
 import 'prismjs/components/prism-java';
 
-import ClearIcon from '@mui/icons-material/Clear';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import EditIcon from '@mui/icons-material/Edit';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
-import PlayArrowOutlinedIcon from '@mui/icons-material/PlayArrowOutlined';
-import ReplayIcon from '@mui/icons-material/Replay';
-import SportsMartialArtsOutlinedIcon from '@mui/icons-material/SportsMartialArtsOutlined';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
-import { Avatar, Box, Button, IconButton, ListDivider, ListItem, ListItemDecorator, Menu, MenuItem, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
+import PlayArrowOutlinedIcon from '@mui/icons-material/PlayArrowOutlined';
+import SportsMartialArtsOutlinedIcon from '@mui/icons-material/SportsMartialArtsOutlined';
+
+import { Avatar, Box, Button, IconButton, ListItem, Stack, Tooltip, Typography, useTheme } from '@mui/joy';
 import { SxProps, Theme } from '@mui/joy/styles/types';
 
-
-// One message in the chat
 
 export interface UiMessage {
   uid: string;
   sender: 'You' | 'Bot' | string;
   role: 'assistant' | 'system' | 'user';
   text: string;
-  model: string; // optional for 'assistant' roles (not user messages)
+  model: string;
   avatar: string | React.ElementType | null;
 }
 
 
-/// Utilities to split the message into blocks of text and code
+/// 消息拆分为文本和代码块的实用工具
 
 type MessageBlock = { type: 'text'; content: string; } | CodeMessageBlock;
 type CodeMessageBlock = { type: 'code'; content: string; code: string; language: string; };
@@ -49,16 +44,6 @@ const parseAndHighlightCodeBlocks = (text: string): MessageBlock[] => {
   while ((match = codeBlockRegex.exec(text)) !== null) {
     const language = match[1] || 'typescript';
     const codeBlock = match[2].trim();
-
-    // Load the specified language if it's not loaded yet
-    // NOTE: this is commented out because it inflates the size of the bundle by 200k
-    // if (!Prism.languages[language]) {
-    //   try {
-    //     require(`prismjs/components/prism-${language}`);
-    //   } catch (e) {
-    //     console.warn(`Prism language '${language}' not found, falling back to 'typescript'`);
-    //   }
-    // }
 
     const highlightedCode = Prism.highlight(
       codeBlock,
@@ -85,7 +70,7 @@ const copyToClipboard = (text: string) => {
 };
 
 
-/// Renderers for the different types of message blocks
+/// 不同类型的消息组件
 
 type SandpackConfig = { template: 'vanilla-ts' | 'vanilla', files: Record<string, string> };
 
@@ -147,68 +132,25 @@ function prettyModel(model: string): string {
 
 
 /**
- * ChatMessage component is a customizable chat message UI component that supports
- * different roles (user, assistant, and system), text editing, syntax highlighting,
- * and code execution using Sandpack for TypeScript, JavaScript, and HTML code blocks.
- * The component also provides options for copying code to clipboard and expanding
- * or collapsing long user messages.
+ * 聊天消息UI组件
+ * 支持不同的角色，用户、机器人、系统
+ * 支持代码语法高亮
+ * 支持沙箱在线编辑和运行代码
+ * 支持复制代码到剪贴板
+ * 支持展开代码块
  *
- * @param {UiMessage} props.uiMessage - The UI message object containing message data.
- * @param {Function} props.onDelete - The function to call when the delete button is clicked.
- * @param {Function} props.onEdit - The function to call when the edit button is clicked and the edited text is submitted.
+ * @param {UiMessage} props.uiMessage - 消息数据
  */
-export function ChatMessage(props: { uiMessage: UiMessage, onDelete: () => void, onEdit: (text: string) => void, onRunAgain: () => void }) {
+export function ChatMessage(props: { uiMessage: UiMessage }) {
   const theme = useTheme();
   const message = props.uiMessage;
 
-  // viewing
   const [forceExpanded, setForceExpanded] = React.useState(false);
-
-  // editing
-  const [isHovering, setIsHovering] = React.useState(false);
-  const [menuAnchor, setMenuAnchor] = React.useState<HTMLElement | null>(null);
-  const [isEditing, setIsEditing] = React.useState(false);
-  const [editedText, setEditedText] = React.useState(message.text);
-
-
-  const closeMenu = () => setMenuAnchor(null);
-
-  const handleMenuCopy = (e: React.MouseEvent) => {
-    copyToClipboard(message.text);
-    e.preventDefault();
-    closeMenu();
-  };
-
-  const handleMenuEdit = (e: React.MouseEvent) => {
-    if (!isEditing)
-      setEditedText(message.text);
-    setIsEditing(!isEditing);
-    e.preventDefault();
-    closeMenu();
-  };
-
-  const handleMenuRunAgain = (e: React.MouseEvent) => {
-    props.onRunAgain();
-    e.preventDefault();
-    closeMenu();
-  };
-
-  const handleEditTextChanged = (e: React.ChangeEvent<HTMLTextAreaElement>) =>
-    setEditedText(e.target.value);
-
-  const handleEditKeyPressed = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      setIsEditing(false);
-      props.onEdit(editedText);
-    }
-  };
-
 
   const handleExpand = () => setForceExpanded(true);
 
 
-  // theming
+  // 主题配置
   let background = theme.vars.palette.background.body;
   let textBackground: string | undefined = undefined;
   if (message.role === 'system') {
@@ -223,7 +165,7 @@ export function ChatMessage(props: { uiMessage: UiMessage, onDelete: () => void,
       background = theme.vars.palette.background.body;
   }
 
-  // text box css
+  // 文本框样式
   const chatFontCss = {
     my: 'auto',
     fontFamily: message.role === 'assistant' ? theme.fontFamily.code : undefined,
@@ -231,7 +173,7 @@ export function ChatMessage(props: { uiMessage: UiMessage, onDelete: () => void,
     lineHeight: 1.75,
   };
 
-  // user message truncation
+  // 用户消息截断
   let collapsedText = message.text;
   let isCollapsed = false;
   if (!forceExpanded && message.role === 'user') {
@@ -252,17 +194,8 @@ export function ChatMessage(props: { uiMessage: UiMessage, onDelete: () => void,
       borderBottomColor: `rgba(${theme.vars.palette.neutral.mainChannel} / 0.1)`,
     }}>
 
-      {/* Author */}
-
-      <Stack sx={{ alignItems: 'center', minWidth: 64, textAlign: 'center' }}
-             onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}
-             onClick={event => setMenuAnchor(event.currentTarget)}>
-
-        {isHovering ? (
-          <IconButton variant='soft' color='primary'>
-            <MoreVertIcon />
-          </IconButton>
-        ) : (
+      <Stack sx={{ alignItems: 'center', minWidth: 64, textAlign: 'center' }}>
+        {(
           typeof message.avatar === 'string'
             ? <Avatar alt={message.sender} src={message.avatar} />
             : (message.avatar != null)
@@ -277,43 +210,9 @@ export function ChatMessage(props: { uiMessage: UiMessage, onDelete: () => void,
           </Tooltip>
         )}
 
-        {/* message operations menu (floating) */}
-        {!!menuAnchor && (
-          <Menu open anchorEl={menuAnchor} onClose={closeMenu} sx={{ minWidth: 200 }}>
-            <MenuItem onClick={handleMenuCopy}>
-              <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
-              Copy
-            </MenuItem>
-            <MenuItem onClick={handleMenuEdit}>
-              <ListItemDecorator><EditIcon /></ListItemDecorator>
-              {isEditing ? 'Discard' : 'Edit'}
-            </MenuItem>
-            <ListDivider />
-            <MenuItem onClick={handleMenuRunAgain}>
-              <ListItemDecorator><ReplayIcon /></ListItemDecorator>
-              Restart
-            </MenuItem>
-            <MenuItem onClick={props.onDelete}>
-              <ListItemDecorator><ClearIcon /></ListItemDecorator>
-              Delete
-            </MenuItem>
-          </Menu>
-        )}
-
       </Stack>
 
-
-      {/* Edit / Blocks */}
-
-      {isEditing ? (
-
-        <Textarea variant='soft' color='primary' autoFocus minRows={1}
-                  value={editedText} onChange={handleEditTextChanged} onKeyDown={handleEditKeyPressed}
-                  sx={{ ...chatFontCss, flexGrow: 1 }} />
-
-      ) : (
-
-        <Box sx={{ ...chatFontCss, flexGrow: 0, whiteSpace: 'break-spaces' }}>
+      {<Box sx={{ ...chatFontCss, flexGrow: 0, whiteSpace: 'break-spaces' }}>
           {parseAndHighlightCodeBlocks(collapsedText).map((part, index) =>
             part.type === 'code' ? (
               <ChatMessageCodeBlock key={index} codeBlock={part} theme={theme} sx={chatFontCss} />
@@ -326,12 +225,10 @@ export function ChatMessage(props: { uiMessage: UiMessage, onDelete: () => void,
           )}
           {isCollapsed && (
             <Button variant='plain' onClick={handleExpand}>
-              ... expand ...
+              ... 展开 ...
             </Button>
           )}
-        </Box>
-
-      )}
+        </Box>}
 
     </ListItem>
   );

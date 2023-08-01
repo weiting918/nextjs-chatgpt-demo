@@ -32,7 +32,7 @@ interface ChatCompletionsResponseChunked {
   id: string; // 分块的唯一标识
   object: 'chat.completion.chunk';
   created: number; // 创建时间戳
-  model: string; // AI模型名称, e.g. 'gpt-4-0314'，可能与请求中指定的模型名称不同
+  model: string; // AI模型名称
   choices: {
     delta: Partial<ChatMessage>;
     index: number; // 始终=0，对于 n=1 时
@@ -104,7 +104,7 @@ async function OpenAIStream(apiKey: string, payload: Omit<ChatCompletionsRequest
           if (json.choices[0].delta?.role)
             return;
 
-          // stringify and send the first packet as a JSON object
+          // 第一个数据包，添加额外的信息
           if (!sentFirstPacket) {
             sentFirstPacket = true;
             const firstPacket: ChatApiOutputStart = {
@@ -113,13 +113,13 @@ async function OpenAIStream(apiKey: string, payload: Omit<ChatCompletionsRequest
             controller.enqueue(encoder.encode(JSON.stringify(firstPacket)));
           }
 
-          // transmit the text stream
+          // 传输文本流
           const text = json.choices[0].delta?.content || '';
           const queue = encoder.encode(text);
           controller.enqueue(queue);
 
         } catch (e) {
-          // maybe parse error
+          // json 解析错误，忽略
           controller.error(e);
         }
       });

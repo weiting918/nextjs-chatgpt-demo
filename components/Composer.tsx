@@ -126,7 +126,7 @@ export function Composer({ disableSend, sendMessage }: { disableSend: boolean; s
           </Box>
 
           <Box sx={{ display: 'flex', flexDirection: 'row' }}>
-            <Button fullWidth variant="plain" color="neutral" disabled={disableSend} onClick={showHistory} endDecorator={<HistoryIcon />}>
+            <Button fullWidth variant="plain" color="neutral" onClick={showHistory} endDecorator={<HistoryIcon />}>
               历史记录
             </Button>
           </Box>

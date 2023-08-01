@@ -11,7 +11,6 @@ export default withFileUpload(async (req, res) => {
     return;
   }
 
-  // Create form data
   const formData = new FormData();
   formData.append('file', createReadStream(file.filepath), 'audio.webm');
   formData.append('model', 'whisper-1');

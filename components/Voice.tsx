@@ -261,7 +261,6 @@ export function Voice({ open, onClose }: { open: boolean; onClose: (param: strin
         <Stack direction="row" spacing={2} justifyContent="center" alignItems="center" sx={{ height: '100vw', pb: 25 }}>
           <Box width="40vw" height="20vw" display="flex" flexDirection="column" justifyContent="center" sx={{ mr: 10 }}>
             <Typography level="body5" fontSize="xl4">
-              {/* 请帮我查询一下附近的酒店，谢谢。请帮我查询一下附近的酒店，谢谢。 level="body1" */}
               {message}
             </Typography>
           </Box>
